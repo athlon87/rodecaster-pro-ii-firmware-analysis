@@ -1,0 +1,7 @@
+mido>=1.3
+python-rtmidi>=1.5
+paho-mqtt>=2.0
+pyyaml>=6.0
+# Solo per il pannello Stream Deck (rodecaster_streamdeck.py):
+streamdeck>=0.9.5
+pillow>=10.0

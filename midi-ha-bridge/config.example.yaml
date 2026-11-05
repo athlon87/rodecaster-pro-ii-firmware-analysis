@@ -1,0 +1,49 @@
+# Configurazione del bridge RODECaster Pro II <-> Home Assistant.
+# IMPORTANTE: i numeri MIDI qui sotto sono SEGNAPOSTO. Ricavali dal TUO device con:
+#     python rodecaster_bridge.py --log --port "RODECaster"
+# e sostituisci i valori 'key' / 'midi' con quelli reali che vedi stampati.
+
+midi_port: "RODECaster"          # sottostringa del nome porta MIDI
+discovery_prefix: "homeassistant"
+node_id: "rodecaster"
+
+mqtt:
+  host: "192.168.1.10"           # il tuo broker MQTT (es. l'add-on Mosquitto di HA)
+  port: 1883
+  username: "mqtt_user"
+  password: "mqtt_pass"
+
+# --- Dispositivo -> Home Assistant -------------------------------------------
+# 'key' usa lo stesso formato stampato dal modo --log:  note:<ch>:<n>  cc:<ch>:<n>  pc:<ch>:<n>
+mappings:
+  - id: "pad1"
+    key: "note:0:36"             # SEGNAPOSTO: smart pad 1
+    name: "RODECaster Pad 1"
+    ha_type: "binary_sensor"
+    on_payload: "ON"
+    off_payload: "OFF"
+  - id: "record"
+    key: "cc:0:20"               # SEGNAPOSTO: tasto Record
+    name: "RODECaster Record"
+    ha_type: "binary_sensor"
+
+# --- Home Assistant -> Dispositivo (comandi che HA invia al mixer) -----------
+commands:
+  - command_topic: "rodecaster/cmd/pad1"
+    payload: "PRESS"
+    midi: "note:0:36"            # SEGNAPOSTO
+
+# --- Pannello Stream Deck (usato da rodecaster_streamdeck.py) ----------------
+# Ogni tasto fisico dello Stream Deck -> un comando MIDI verso il mixer.
+# 'reflect_key' (opzionale) accende il tasto quando arriva quel messaggio dal mixer.
+streamdeck:
+  brightness: 60
+  keys:
+    - index: 0
+      label: "Pad 1"
+      midi: "note:0:36"          # SEGNAPOSTO
+      reflect_key: "note:0:36"
+    - index: 1
+      label: "REC"
+      midi: "cc:0:20"            # SEGNAPOSTO
+      reflect_key: "cc:0:20"

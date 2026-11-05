@@ -1,0 +1,5 @@
+# Config reale con credenziali: mai pubblicare
+config.yaml
+.venv/
+__pycache__/
+*.pyc

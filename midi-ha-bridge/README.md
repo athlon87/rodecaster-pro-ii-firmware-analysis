@@ -55,6 +55,12 @@ python rodecaster_streamdeck.py --config config.yaml    # pannello Stream Deck
 - Perché HA scopra le entità serve l'integrazione **MQTT** attiva (es. add-on Mosquitto).
 - Nessuna operazione scrive sul mixer oltre ai messaggi MIDI che invii volontariamente.
 
-## Testato (2026-11-05, Windows 11)
-Rilevamento porta MIDI del mixer ✔, rilevamento `Stream Deck Original` (15 tasti) ✔,
-render delle etichette sui tasti ✔. Test live MIDI→mixer e creazione entità HA non ancora eseguiti.
+## Testato (2026-11-05, Windows 11, Python 3.12)
+Verifiche di fattibilità, senza inviare comandi al mixer né creare entità in HA:
+- rilevamento porta MIDI del mixer ✔ (compare come `MIDI function 0/1`)
+- `Stream Deck Original` (15 tasti) rilevato ✔ e render etichette sui tasti ✔
+- payload MQTT discovery per Home Assistant ben formati (dry-run) ✔
+- messaggi MIDI HA→mixer costruiti correttamente (dry-run, nessun invio) ✔
+- apertura porta MIDI in sola lettura ✔
+
+Test *live* (invio MIDI al mixer, creazione entità in HA) non ancora eseguiti.

@@ -20,7 +20,7 @@ import argparse, json, sys, time
 
 def _need(mod):
     try:
-        return __import__(mod)
+        return __import__(mod, fromlist=["x"])
     except ImportError:
         sys.exit("Manca il modulo '%s'. Esegui:  pip install -r requirements.txt" % mod)
 
@@ -76,7 +76,12 @@ class Bridge:
         self.disc = disc
         self.node = cfg.get("node_id", "rodecaster")
         b = cfg["mqtt"]
-        self.cli = mqtt.Client(client_id="rodecaster-bridge")
+        try:
+            # paho-mqtt 2.x richiede callback_api_version; VERSION1 mantiene le firme on_connect/on_message qui usate
+            self.cli = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
+                                   client_id="rodecaster-bridge")
+        except (AttributeError, TypeError):
+            self.cli = mqtt.Client(client_id="rodecaster-bridge")  # paho-mqtt 1.x
         if b.get("username"):
             self.cli.username_pw_set(b["username"], b.get("password", ""))
         self.cli.on_connect = self._on_connect

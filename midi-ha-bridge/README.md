@@ -47,5 +47,14 @@ python rodecaster_streamdeck.py --config config.yaml    # pannello Stream Deck
 
 ## Note
 - Lo Stream Deck è pilotato via USB-HID con la libreria `StreamDeck` (abcminiuser).
+- **Windows — Stream Deck:** serve `hidapi.dll` raggiungibile (accanto agli script o nel PATH).
+  Scaricala da [libusb/hidapi releases](https://github.com/libusb/hidapi/releases)
+  (`hidapi-win.zip` → usa la `x64\hidapi.dll`). Senza, `--list` dà "Probe failed … HID backend".
+- **Porta MIDI su Windows:** il mixer può comparire come **"MIDI function"** invece di "RODECaster";
+  controlla con `--list`.
 - Perché HA scopra le entità serve l'integrazione **MQTT** attiva (es. add-on Mosquitto).
 - Nessuna operazione scrive sul mixer oltre ai messaggi MIDI che invii volontariamente.
+
+## Testato (2026-11-05, Windows 11)
+Rilevamento porta MIDI del mixer ✔, rilevamento `Stream Deck Original` (15 tasti) ✔,
+render delle etichette sui tasti ✔. Test live MIDI→mixer e creazione entità HA non ancora eseguiti.

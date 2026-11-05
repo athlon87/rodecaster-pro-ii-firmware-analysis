@@ -4,6 +4,8 @@
 # e sostituisci i valori 'key' / 'midi' con quelli reali che vedi stampati.
 
 midi_port: "RODECaster"          # sottostringa del nome porta MIDI
+# NOTA (Windows): il RODECaster appare spesso come porta "MIDI function",
+# non "RODECaster". Verifica con --list e usa il nome che vedi (es. "MIDI function").
 discovery_prefix: "homeassistant"
 node_id: "rodecaster"
 

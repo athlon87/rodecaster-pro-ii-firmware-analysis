@@ -1,8 +1,19 @@
-# rodecaster-pro-ii-firmware-analysis
-Technical analysis and system architecture documentation of the RØDECaster Pro II Linux embedded firmware.
-# RØDECaster Pro II — Embedded Linux System Architecture
+# RØDECaster Pro II — Reverse Engineering, Firmware Analysis & Integration
+
+Technical and educational research on the **RØDECaster Pro II** (product `rcp2`): embedded
+Linux system architecture, application-layer reverse engineering, and non-invasive integration
+tooling (MIDI → Home Assistant / Stream Deck).
+
+> **Scope & ethics.** Everything here is **passive** analysis of the official firmware and a
+> device the author owns, for interoperability and learning. No signature/MD5 bypass, no SSH-key
+> injection, no rooting, no modified-firmware flashing. The firmware itself is **not** redistributed.
 
 This repository hosts a technical and educational analysis of the **RØDECaster Pro II** (product `rcp2`) system architecture. The data has been extracted via passive analysis of the official firmware `os.tar.gz` (v1.7.7).
+
+### Contents
+- **[APPLICATION_LAYER.md](APPLICATION_LAYER.md)** — user-space control surfaces (OSC/TCP, MIDI, D-Bus), binaries, update mechanism.
+- **[midi-ha-bridge/](midi-ha-bridge/)** — MIDI → Home Assistant bridge + Elgato Stream Deck panel (uses only the documented MIDI surface).
+- This README — OS/boot/network system architecture (below).
 
 ## 📌 Firmware Information
 * **Source:** ://rode.com

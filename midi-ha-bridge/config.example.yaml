@@ -1,51 +1,51 @@
-# Configurazione del bridge RODECaster Pro II <-> Home Assistant.
-# IMPORTANTE: i numeri MIDI qui sotto sono SEGNAPOSTO. Ricavali dal TUO device con:
+# Configuration for the RODECaster Pro II <-> Home Assistant bridge.
+# IMPORTANT: the MIDI numbers below are PLACEHOLDERS. Obtain them from YOUR device with:
 #     python rodecaster_bridge.py --log --port "RODECaster"
-# e sostituisci i valori 'key' / 'midi' con quelli reali che vedi stampati.
+# and replace the 'key' / 'midi' values with the real ones you see printed.
 
-midi_port: "RODECaster"          # sottostringa del nome porta MIDI
-# NOTA (Windows): il RODECaster appare spesso come porta "MIDI function",
-# non "RODECaster". Verifica con --list e usa il nome che vedi (es. "MIDI function").
+midi_port: "RODECaster"          # MIDI port name substring
+# NOTE (Windows): the RODECaster often shows up as the "MIDI function" port,
+# not "RODECaster". Check with --list and use the name you see (e.g. "MIDI function").
 discovery_prefix: "homeassistant"
 node_id: "rodecaster"
 
 mqtt:
-  host: "192.168.1.10"           # il tuo broker MQTT (es. l'add-on Mosquitto di HA)
+  host: "192.168.1.10"           # your MQTT broker (e.g. the HA Mosquitto add-on)
   port: 1883
   username: "mqtt_user"
   password: "mqtt_pass"
 
-# --- Dispositivo -> Home Assistant -------------------------------------------
-# 'key' usa lo stesso formato stampato dal modo --log:  note:<ch>:<n>  cc:<ch>:<n>  pc:<ch>:<n>
+# --- Device -> Home Assistant ------------------------------------------------
+# 'key' uses the same format printed by --log mode:  note:<ch>:<n>  cc:<ch>:<n>  pc:<ch>:<n>
 mappings:
   - id: "pad1"
-    key: "note:0:36"             # SEGNAPOSTO: smart pad 1
+    key: "note:0:36"             # PLACEHOLDER: smart pad 1
     name: "RODECaster Pad 1"
     ha_type: "binary_sensor"
     on_payload: "ON"
     off_payload: "OFF"
   - id: "record"
-    key: "cc:0:20"               # SEGNAPOSTO: tasto Record
+    key: "cc:0:20"               # PLACEHOLDER: Record button
     name: "RODECaster Record"
     ha_type: "binary_sensor"
 
-# --- Home Assistant -> Dispositivo (comandi che HA invia al mixer) -----------
+# --- Home Assistant -> Device (commands HA sends to the mixer) ---------------
 commands:
   - command_topic: "rodecaster/cmd/pad1"
     payload: "PRESS"
-    midi: "note:0:36"            # SEGNAPOSTO
+    midi: "note:0:36"            # PLACEHOLDER
 
-# --- Pannello Stream Deck (usato da rodecaster_streamdeck.py) ----------------
-# Ogni tasto fisico dello Stream Deck -> un comando MIDI verso il mixer.
-# 'reflect_key' (opzionale) accende il tasto quando arriva quel messaggio dal mixer.
+# --- Stream Deck panel (used by rodecaster_streamdeck.py) --------------------
+# Each physical Stream Deck key -> one MIDI command to the mixer.
+# 'reflect_key' (optional) lights the key up when that message arrives from the mixer.
 streamdeck:
   brightness: 60
   keys:
     - index: 0
       label: "Pad 1"
-      midi: "note:0:36"          # SEGNAPOSTO
+      midi: "note:0:36"          # PLACEHOLDER
       reflect_key: "note:0:36"
     - index: 1
       label: "REC"
-      midi: "cc:0:20"            # SEGNAPOSTO
+      midi: "cc:0:20"            # PLACEHOLDER
       reflect_key: "cc:0:20"

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Pannello Stream Deck per il RODECaster Pro II (via MIDI).
+Stream Deck panel for the RODECaster Pro II (via MIDI).
 
-Trasforma un Elgato Stream Deck in superficie di controllo per il mixer:
-- premere un tasto -> invia un comando MIDI al RODECaster;
-- (opzionale) un messaggio MIDI in arrivo dal mixer accende il tasto corrispondente.
+Turns an Elgato Stream Deck into a control surface for the mixer:
+- pressing a key -> sends a MIDI command to the RODECaster;
+- (optional) an incoming MIDI message from the mixer lights up the matching key.
 
-Usa la libreria ufficiale 'StreamDeck' (abcminiuser) che parla direttamente
-all'hardware via USB-HID. Nessuna modifica al mixer o al firmware.
+Uses the official 'StreamDeck' library (abcminiuser), which talks to the
+hardware directly over USB-HID. No change to the mixer or the firmware.
 
-  Elenca gli Stream Deck collegati:  python rodecaster_streamdeck.py --list
-  Avvia il pannello:                 python rodecaster_streamdeck.py --config config.yaml
+  List connected Stream Decks:  python rodecaster_streamdeck.py --list
+  Start the panel:              python rodecaster_streamdeck.py --config config.yaml
 """
 import argparse, sys, threading
 
@@ -18,7 +18,7 @@ def _need(mod):
     try:
         return __import__(mod, fromlist=["x"])
     except ImportError:
-        sys.exit("Manca un modulo ('%s'). Esegui:  pip install -r requirements.txt" % mod)
+        sys.exit("A module is missing ('%s'). Run:  pip install -r requirements.txt" % mod)
 
 def _msg_key(msg):
     if msg.type in ("note_on", "note_off"):
@@ -47,11 +47,11 @@ def list_decks():
     DeviceManager = _need("StreamDeck.DeviceManager").DeviceManager
     decks = DeviceManager().enumerate()
     if not decks:
-        print("Nessuno Stream Deck trovato.")
+        print("No Stream Deck found.")
         return
     for d in decks:
         d.open(); d.reset()
-        print("  %s  (%d tasti)" % (d.deck_type(), d.key_count()))
+        print("  %s  (%d keys)" % (d.deck_type(), d.key_count()))
         d.close()
 
 def send_midi(mido, outname, spec):
@@ -63,7 +63,7 @@ def send_midi(mido, outname, spec):
     elif kind == "pc":
         m = mido.Message("program_change", channel=ch, program=n)
     else:
-        print("Spec MIDI non valida: %s" % spec); return
+        print("Invalid MIDI spec: %s" % spec); return
     with mido.open_output(outname) as o:
         o.send(m)
 
@@ -85,7 +85,7 @@ def run(path):
 
     decks = DeviceManager().enumerate()
     if not decks:
-        sys.exit("Nessuno Stream Deck trovato (usa --list).")
+        sys.exit("No Stream Deck found (use --list).")
     deck = decks[0]
     deck.open(); deck.reset()
     deck.set_brightness(sd.get("brightness", 60))
@@ -98,12 +98,12 @@ def run(path):
         k = by_index[key]
         if outname and k.get("midi"):
             send_midi(mido, outname, k["midi"])
-            print("Tasto %d -> MIDI %s" % (key, k["midi"]))
+            print("Key %d -> MIDI %s" % (key, k["midi"]))
         else:
-            print("Tasto %d premuto (nessuna porta MIDI out o midi non impostato)" % key)
+            print("Key %d pressed (no MIDI out port or 'midi' not set)" % key)
     deck.set_key_callback(on_press)
 
-    # feedback dal mixer -> accende i tasti
+    # feedback from the mixer -> light up the keys
     def midi_listener():
         if not inname:
             return
@@ -117,7 +117,7 @@ def run(path):
     if inname:
         threading.Thread(target=midi_listener, daemon=True).start()
 
-    print("Pannello Stream Deck attivo. Ctrl+C per uscire.")
+    print("Stream Deck panel running. Ctrl+C to exit.")
     try:
         while True:
             threading.Event().wait(1)
@@ -127,9 +127,9 @@ def run(path):
         deck.reset(); deck.close()
 
 def main():
-    ap = argparse.ArgumentParser(description="Pannello Stream Deck per RODECaster Pro II via MIDI")
-    ap.add_argument("--list", action="store_true", help="elenca gli Stream Deck collegati")
-    ap.add_argument("--config", help="file YAML di configurazione")
+    ap = argparse.ArgumentParser(description="Stream Deck panel for RODECaster Pro II via MIDI")
+    ap.add_argument("--list", action="store_true", help="list connected Stream Decks")
+    ap.add_argument("--config", help="YAML configuration file")
     a = ap.parse_args()
     if a.list:
         list_decks()

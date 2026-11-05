@@ -1,66 +1,66 @@
-# RODECaster Pro II — Bridge MIDI → Home Assistant + Stream Deck
+# RODECaster Pro II — MIDI → Home Assistant bridge + Stream Deck
 
-Integrazione **esterna e non invasiva** del RØDECaster Pro II, basata unicamente
-sulla superficie **MIDI** del dispositivo (quella che RØDE documenta per il plugin
-Elgato Stream Deck). Non modifica il mixer, non tocca il firmware, non usa le
-interfacce interne OSC/DBus.
+**External, non-invasive** integration of the RØDECaster Pro II, based solely on the
+device's **MIDI** surface (the one RØDE documents for the Elgato Stream Deck plugin).
+It does not modify the mixer, does not touch the firmware, and does not use the
+internal OSC/D-Bus interfaces.
 
-## Componenti
-- `rodecaster_bridge.py` — ponte MIDI ↔ MQTT per Home Assistant (con MQTT discovery).
-- `rodecaster_streamdeck.py` — pannello Elgato Stream Deck: i tasti inviano comandi
-  MIDI al mixer e riflettono lo stato in arrivo.
-- `config.example.yaml` — configurazione (mappings, comandi, tasti Stream Deck).
-- `requirements.txt` — dipendenze Python.
+## Components
+- `rodecaster_bridge.py` — MIDI ↔ MQTT bridge for Home Assistant (with MQTT discovery).
+- `rodecaster_streamdeck.py` — Elgato Stream Deck panel: keys send MIDI to the mixer
+  and reflect incoming state.
+- `config.example.yaml` — configuration (mappings, commands, Stream Deck keys).
+- `requirements.txt` — Python dependencies.
 
-## Installazione
+## Install
 ```bash
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
 ```
 
-## 1. Scoprire porte e comandi del TUO device
-I numeri MIDI variano: vanno letti dal proprio dispositivo, non indovinati.
+## 1. Discover YOUR device's ports and commands
+MIDI numbers vary per device: read them from your own unit, don't guess.
 
 ```bash
-python rodecaster_bridge.py --list                      # elenca le porte MIDI
-python rodecaster_bridge.py --log --port "RODECaster"   # stampa i messaggi MIDI
+python rodecaster_bridge.py --list                      # list MIDI ports
+python rodecaster_bridge.py --log --port "RODECaster"   # print MIDI messages
 ```
-Premi pad, fader e pulsanti: ogni riga mostra una `key` (es. `note:0:36`, `cc:0:20`).
-Copia quelle chiavi nel file di config.
+Press pads, faders and buttons: each line shows a `key` (e.g. `note:0:36`, `cc:0:20`).
+Copy those keys into the config file.
 
-## 2. Configurare
-Copia `config.example.yaml` in `config.yaml` e inserisci: porta MIDI, broker MQTT,
-e le `key`/`midi` reali ricavate al passo 1.
+## 2. Configure
+Copy `config.example.yaml` to `config.yaml` and fill in: MIDI port, MQTT broker,
+and the real `key`/`midi` values obtained in step 1.
 
-## 3. Avviare
+## 3. Run
 ```bash
-python rodecaster_bridge.py --config config.yaml        # bridge verso Home Assistant
-python rodecaster_streamdeck.py --config config.yaml    # pannello Stream Deck
+python rodecaster_bridge.py --config config.yaml        # bridge to Home Assistant
+python rodecaster_streamdeck.py --config config.yaml    # Stream Deck panel
 ```
 
-## Come funziona
-- **Device → HA:** il bridge ascolta i messaggi MIDI del mixer e pubblica lo stato
-  su MQTT con *discovery* automatico (le entità compaiono da sole in Home Assistant).
-- **HA → Device:** HA pubblica su un `command_topic` e il bridge invia il MIDI al mixer.
-- **Stream Deck:** ogni tasto invia un comando MIDI; un messaggio MIDI in arrivo può
-  accendere il tasto corrispondente (`reflect_key`).
+## How it works
+- **Device → HA:** the bridge listens to the mixer's MIDI messages and publishes state
+  over MQTT with automatic *discovery* (entities appear by themselves in Home Assistant).
+- **HA → Device:** HA publishes to a `command_topic` and the bridge sends MIDI to the mixer.
+- **Stream Deck:** each key sends a MIDI command; an incoming MIDI message can light up
+  the matching key (`reflect_key`).
 
-## Note
-- Lo Stream Deck è pilotato via USB-HID con la libreria `StreamDeck` (abcminiuser).
-- **Windows — Stream Deck:** serve `hidapi.dll` raggiungibile (accanto agli script o nel PATH).
-  Scaricala da [libusb/hidapi releases](https://github.com/libusb/hidapi/releases)
-  (`hidapi-win.zip` → usa la `x64\hidapi.dll`). Senza, `--list` dà "Probe failed … HID backend".
-- **Porta MIDI su Windows:** il mixer può comparire come **"MIDI function"** invece di "RODECaster";
-  controlla con `--list`.
-- Perché HA scopra le entità serve l'integrazione **MQTT** attiva (es. add-on Mosquitto).
-- Nessuna operazione scrive sul mixer oltre ai messaggi MIDI che invii volontariamente.
+## Notes
+- The Stream Deck is driven over USB-HID with the `StreamDeck` library (abcminiuser).
+- **Windows — Stream Deck:** `hidapi.dll` must be reachable (next to the scripts or on PATH).
+  Download it from [libusb/hidapi releases](https://github.com/libusb/hidapi/releases)
+  (`hidapi-win.zip` → use `x64\hidapi.dll`). Without it, `--list` reports "Probe failed … HID backend".
+- **MIDI port on Windows:** the mixer may show up as **"MIDI function"** instead of "RODECaster";
+  check with `--list`.
+- For HA to discover the entities, the **MQTT** integration must be active (e.g. the Mosquitto add-on).
+- No operation writes to the mixer other than the MIDI messages you send on purpose.
 
-## Testato (2026-11-05, Windows 11, Python 3.12)
-Verifiche di fattibilità, senza inviare comandi al mixer né creare entità in HA:
-- rilevamento porta MIDI del mixer ✔ (compare come `MIDI function 0/1`)
-- `Stream Deck Original` (15 tasti) rilevato ✔ e render etichette sui tasti ✔
-- payload MQTT discovery per Home Assistant ben formati (dry-run) ✔
-- messaggi MIDI HA→mixer costruiti correttamente (dry-run, nessun invio) ✔
-- apertura porta MIDI in sola lettura ✔
+## Tested (2026-11-05, Windows 11, Python 3.12)
+Feasibility checks, without sending commands to the mixer or creating entities in HA:
+- mixer MIDI port detected ✔ (shows up as `MIDI function 0/1`)
+- `Stream Deck Original` (15 keys) detected ✔ and key-label rendering ✔
+- Home Assistant MQTT discovery payloads well-formed (dry-run) ✔
+- HA→mixer MIDI messages built correctly (dry-run, nothing sent) ✔
+- read-only MIDI port open ✔
 
-Test *live* (invio MIDI al mixer, creazione entità in HA) non ancora eseguiti.
+*Live* tests (sending MIDI to the mixer, creating entities in HA) not yet performed.

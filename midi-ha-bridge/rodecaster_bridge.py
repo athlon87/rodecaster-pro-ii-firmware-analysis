@@ -2,19 +2,19 @@
 """
 RODECaster Pro II  <->  Home Assistant  bridge (via MIDI + MQTT discovery).
 
-Usa SOLO la superficie MIDI ufficiale del dispositivo (quella documentata da RODE
-per il plugin Elgato Stream Deck). Non modifica il mixer, non tocca il firmware,
-non usa l'interfaccia OSC/DBus interna.
+Uses ONLY the device's official MIDI surface (the one RODE documents for the
+Elgato Stream Deck plugin). It does not modify the mixer, does not touch the
+firmware, and does not use the internal OSC/D-Bus interfaces.
 
-Modi d'uso:
-  1) Scoprire le porte MIDI:        python rodecaster_bridge.py --list
-  2) Imparare i comandi del device: python rodecaster_bridge.py --log --port "RODECaster"
-  3) Avviare il bridge verso HA:    python rodecaster_bridge.py --config config.yaml
+Usage:
+  1) Discover MIDI ports:          python rodecaster_bridge.py --list
+  2) Learn the device's commands:  python rodecaster_bridge.py --log --port "RODECaster"
+  3) Start the bridge to HA:       python rodecaster_bridge.py --config config.yaml
 
-Il mapping comando<->entita HA e' interamente nel file di config: lo popoli tu
-con i numeri reali che vedi in modo --log sul TUO dispositivo.
+The command<->HA-entity mapping lives entirely in the config file: fill it with
+the real numbers you see in --log mode on YOUR device.
 
-Dipendenze: mido, python-rtmidi, paho-mqtt, pyyaml  (vedi requirements.txt)
+Dependencies: mido, python-rtmidi, paho-mqtt, pyyaml  (see requirements.txt)
 """
 import argparse, json, sys, time
 
@@ -22,17 +22,18 @@ def _need(mod):
     try:
         return __import__(mod, fromlist=["x"])
     except ImportError:
-        sys.exit("Manca il modulo '%s'. Esegui:  pip install -r requirements.txt" % mod)
+        sys.exit("Missing module '%s'. Run:  pip install -r requirements.txt" % mod)
 
 def list_ports():
     mido = _need("mido")
-    print("== Porte MIDI in INGRESSO (dal dispositivo al PC) ==")
+    print("== MIDI INPUT ports (device -> PC) ==")
     for n in mido.get_input_names():
         print("  ", n)
-    print("== Porte MIDI in USCITA (dal PC al dispositivo) ==")
+    print("== MIDI OUTPUT ports (PC -> device) ==")
     for n in mido.get_output_names():
         print("  ", n)
-    print("\nSuggerimento: la porta del mixer contiene di solito 'RODECaster'.")
+    print("\nTip: the mixer port is usually named 'RODECaster' (on Windows it may")
+    print("     appear as 'MIDI function').")
 
 def _match_port(names, needle):
     for n in names:
@@ -44,17 +45,17 @@ def log_mode(port_substr):
     mido = _need("mido")
     name = _match_port(mido.get_input_names(), port_substr)
     if not name:
-        sys.exit("Nessuna porta di ingresso contiene '%s'. Usa --list." % port_substr)
-    print("Ascolto '%s'. Premi pad/fader/pulsanti sul RODECaster; Ctrl+C per uscire.\n" % name)
+        sys.exit("No input port contains '%s'. Use --list." % port_substr)
+    print("Listening on '%s'. Press pads/faders/buttons on the RODECaster; Ctrl+C to exit.\n" % name)
     with mido.open_input(name) as inport:
         for msg in inport:
             d = msg.dict()
-            # riga compatta utile a costruire il mapping di config
+            # compact line, handy to build the config mapping
             key = _msg_key(msg)
             print("%-22s  key=%s  raw=%s" % (msg.type, key, d))
 
 def _msg_key(msg):
-    """Chiave stabile per identificare un controllo nel config."""
+    """Stable key identifying a control in the config."""
     if msg.type in ("note_on", "note_off"):
         return "note:%d:%d" % (msg.channel, msg.note)
     if msg.type == "control_change":
@@ -77,7 +78,7 @@ class Bridge:
         self.node = cfg.get("node_id", "rodecaster")
         b = cfg["mqtt"]
         try:
-            # paho-mqtt 2.x richiede callback_api_version; VERSION1 mantiene le firme on_connect/on_message qui usate
+            # paho-mqtt 2.x requires callback_api_version; VERSION1 keeps the on_connect/on_message signatures used here
             self.cli = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
                                    client_id="rodecaster-bridge")
         except (AttributeError, TypeError):
@@ -90,7 +91,7 @@ class Bridge:
         self.inname = _match_port(self.mido.get_input_names(), cfg["midi_port"])
         self.outname = _match_port(self.mido.get_output_names(), cfg["midi_port"])
         if not self.inname:
-            sys.exit("Porta MIDI in ingresso '%s' non trovata (usa --list)." % cfg["midi_port"])
+            sys.exit("MIDI input port '%s' not found (use --list)." % cfg["midi_port"])
 
     # ---- Home Assistant MQTT discovery -------------------------------------
     def _publish_discovery(self):
@@ -108,12 +109,12 @@ class Bridge:
             }
             payload.update(m.get("extra", {}))
             self.cli.publish(topic, json.dumps(payload), retain=True)
-        print("Discovery pubblicato per %d entita'." % len(self.mappings))
+        print("Discovery published for %d entities." % len(self.mappings))
 
     def _on_connect(self, c, u, flags, rc):
-        print("MQTT connesso (rc=%s)." % rc)
+        print("MQTT connected (rc=%s)." % rc)
         self._publish_discovery()
-        # ascolta i comandi da HA verso il device
+        # listen for commands from HA to the device
         for cmd in self.commands:
             c.subscribe(cmd["command_topic"])
 
@@ -125,7 +126,7 @@ class Bridge:
 
     def _send_midi(self, spec):
         if not self.outname:
-            print("Nessuna porta MIDI in uscita: comando ignorato.")
+            print("No MIDI output port: command ignored.")
             return
         kind, ch, n = spec.split(":")[0], int(spec.split(":")[1]), int(spec.split(":")[2])
         if kind == "note":
@@ -135,17 +136,17 @@ class Bridge:
         elif kind == "pc":
             m = self.mido.Message("program_change", channel=ch, program=n)
         else:
-            print("Spec MIDI non valida: %s" % spec); return
+            print("Invalid MIDI spec: %s" % spec); return
         with self.mido.open_output(self.outname) as o:
             o.send(m)
-        print("MIDI inviato: %s" % spec)
+        print("MIDI sent: %s" % spec)
 
     # ---- loop device -> HA --------------------------------------------------
     def run(self):
         self.cli.connect(*self._broker, keepalive=30)
         self.cli.loop_start()
         by_key = {m["key"]: m for m in self.mappings}
-        print("Bridge attivo su '%s'. Ctrl+C per fermare." % self.inname)
+        print("Bridge running on '%s'. Ctrl+C to stop." % self.inname)
         try:
             with self.mido.open_input(self.inname) as inport:
                 for msg in inport:
@@ -171,11 +172,11 @@ def run_bridge(path):
     Bridge(cfg).run()
 
 def main():
-    ap = argparse.ArgumentParser(description="Bridge RODECaster Pro II <-> Home Assistant via MIDI")
-    ap.add_argument("--list", action="store_true", help="elenca le porte MIDI e termina")
-    ap.add_argument("--log", action="store_true", help="stampa i messaggi MIDI in arrivo (per mappare i controlli)")
-    ap.add_argument("--port", default="RODECaster", help="sottostringa del nome porta MIDI (default: RODECaster)")
-    ap.add_argument("--config", help="file YAML di configurazione per avviare il bridge")
+    ap = argparse.ArgumentParser(description="RODECaster Pro II <-> Home Assistant bridge via MIDI")
+    ap.add_argument("--list", action="store_true", help="list MIDI ports and exit")
+    ap.add_argument("--log", action="store_true", help="print incoming MIDI messages (to map controls)")
+    ap.add_argument("--port", default="RODECaster", help="MIDI port name substring (default: RODECaster)")
+    ap.add_argument("--config", help="YAML configuration file to start the bridge")
     a = ap.parse_args()
     if a.list:
         list_ports()

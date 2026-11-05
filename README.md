@@ -54,6 +54,17 @@ This mapping correlates the open ports observed during network scans with the in
 
 ---
 
+## 🧩 Application Layer & Control Surfaces
+
+Beyond the OS/boot layer above, a passive analysis of the user-space application
+binaries (`rc_audio_mixer`, `rc_gui_juce`) documents the device's control surfaces —
+an internal **OSC/TCP** property bus, the officially documented **MIDI** interface,
+and a **D-Bus** UI interface — plus dynamic dependencies and the update mechanism.
+
+➡️ See **[APPLICATION_LAYER.md](APPLICATION_LAYER.md)**.
+
+---
+
 ## 🔗 External Resources & GPL Source Code
 The Linux kernel source code patched by RØDE is released publicly under the GPL license and can be retrieved from:
 * [RØDE Linux Kernel A113D Source Archive](https://amazonaws.com)
